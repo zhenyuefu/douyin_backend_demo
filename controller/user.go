@@ -1,14 +1,16 @@
 package controller
 
 import (
+	"errors"
+	"github.com/RaymondCode/simple-demo/db"
+	"github.com/RaymondCode/simple-demo/middleware"
 	"github.com/gin-gonic/gin"
+	"github.com/go-sql-driver/mysql"
+	"golang.org/x/crypto/bcrypt"
+	"log"
 	"net/http"
-	"sync/atomic"
 )
 
-// usersLoginInfo use map to store user info, and key is username+password for demo
-// user data will be cleared every time the server starts
-// test data: username=zhanglei, password=douyin
 var usersLoginInfo = map[string]User{
 	"zhangleidouyin": {
 		Id:            1,
@@ -19,11 +21,9 @@ var usersLoginInfo = map[string]User{
 	},
 }
 
-var userIdSequence = int64(1)
-
 type UserLoginResponse struct {
 	Response
-	UserId int64  `json:"user_id,omitempty"`
+	UserId uint   `json:"user_id,omitempty"`
 	Token  string `json:"token"`
 }
 
@@ -35,24 +35,35 @@ type UserResponse struct {
 func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
-	token := username + password
+	user := db.UserModel{
+		Name:       "testName",
+		Identifier: username,
+		Credential: hashedPassword,
+	}
 
-	if _, exist := usersLoginInfo[token]; exist {
+	err := db.CreateUser(&user)
+
+	if err != nil {
+		var mysqlErr *mysql.MySQLError
+		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+			c.JSON(http.StatusOK, UserLoginResponse{
+				Response: Response{StatusCode: 1, StatusMsg: "用户已经注册"},
+			})
+		}
 		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: Response{StatusCode: 1, StatusMsg: "User already exist"},
+			Response: Response{StatusCode: 1, StatusMsg: "服务器错误"},
 		})
 	} else {
-		atomic.AddInt64(&userIdSequence, 1)
-		newUser := User{
-			Id:   userIdSequence,
-			Name: username,
+		token, err := middleware.GenerateToken(user.ID, user.Identifier)
+		if err != nil {
+			log.Fatalf("generate token error: %v", err)
 		}
-		usersLoginInfo[token] = newUser
 		c.JSON(http.StatusOK, UserLoginResponse{
 			Response: Response{StatusCode: 0},
-			UserId:   userIdSequence,
-			Token:    username + password,
+			UserId:   user.ID,
+			Token:    token,
 		})
 	}
 }
@@ -60,33 +71,46 @@ func Register(c *gin.Context) {
 func Login(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
-
-	token := username + password
-
-	if user, exist := usersLoginInfo[token]; exist {
+	user, err := db.VerifyCredential(username, password)
+	if err != nil {
 		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: Response{StatusCode: 0},
-			UserId:   user.Id,
-			Token:    token,
+			Response: Response{StatusCode: 1, StatusMsg: err.Error()},
 		})
 	} else {
+		token, err := middleware.GenerateToken(user.ID, user.Identifier)
+		if err != nil {
+			log.Fatalf("generate token error: %v", err)
+		}
 		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: Response{StatusCode: 1, StatusMsg: "User doesn't exist"},
+			Response: Response{StatusCode: 0},
+			UserId:   user.ID,
+			Token:    token,
 		})
 	}
 }
 
 func UserInfo(c *gin.Context) {
-	token := c.Query("token")
-
-	if user, exist := usersLoginInfo[token]; exist {
+	claim, exist := c.Get("user")
+	var uid uint
+	var user db.UserModel
+	if exist {
+		uid = claim.(*middleware.Claims).ID
+	}
+	err := db.GetUser(&user, uid)
+	if err == nil {
 		c.JSON(http.StatusOK, UserResponse{
 			Response: Response{StatusCode: 0},
-			User:     user,
+			User: User{
+				Id:            user.ID,
+				Name:          user.Identifier,
+				FollowCount:   0,
+				FollowerCount: 0,
+				IsFollow:      false,
+			},
 		})
 	} else {
 		c.JSON(http.StatusOK, UserResponse{
-			Response: Response{StatusCode: 1, StatusMsg: "User doesn't exist"},
+			Response: Response{StatusCode: 1, StatusMsg: "用户不存在"},
 		})
 	}
 }
