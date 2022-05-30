@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/RaymondCode/simple-demo/db"
 	"github.com/RaymondCode/simple-demo/middleware"
+	"github.com/RaymondCode/simple-demo/structs"
 	"github.com/gin-gonic/gin"
 	"github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
@@ -11,7 +12,7 @@ import (
 	"net/http"
 )
 
-var usersLoginInfo = map[string]User{
+var usersLoginInfo = map[string]structs.User{
 	"zhangleidouyin": {
 		Id:            1,
 		Name:          "zhanglei",
@@ -22,14 +23,14 @@ var usersLoginInfo = map[string]User{
 }
 
 type UserLoginResponse struct {
-	Response
+	structs.Response
 	UserId uint   `json:"user_id,omitempty"`
 	Token  string `json:"token"`
 }
 
 type UserResponse struct {
-	Response
-	User User `json:"user"`
+	structs.Response
+	User structs.User `json:"user"`
 }
 
 func Register(c *gin.Context) {
@@ -49,11 +50,11 @@ func Register(c *gin.Context) {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
 			c.JSON(http.StatusOK, UserLoginResponse{
-				Response: Response{StatusCode: 1, StatusMsg: "用户已经注册"},
+				Response: structs.Response{StatusCode: 1, StatusMsg: "用户已经注册"},
 			})
 		}
 		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: Response{StatusCode: 1, StatusMsg: "服务器错误"},
+			Response: structs.Response{StatusCode: 1, StatusMsg: "服务器错误"},
 		})
 	} else {
 		token, err := middleware.GenerateToken(user.ID, user.Identifier)
@@ -61,7 +62,7 @@ func Register(c *gin.Context) {
 			log.Fatalf("generate token error: %v", err)
 		}
 		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: Response{StatusCode: 0},
+			Response: structs.Response{StatusCode: 0},
 			UserId:   user.ID,
 			Token:    token,
 		})
@@ -74,7 +75,7 @@ func Login(c *gin.Context) {
 	user, err := db.VerifyCredential(username, password)
 	if err != nil {
 		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: Response{StatusCode: 1, StatusMsg: err.Error()},
+			Response: structs.Response{StatusCode: 1, StatusMsg: err.Error()},
 		})
 	} else {
 		token, err := middleware.GenerateToken(user.ID, user.Identifier)
@@ -82,7 +83,7 @@ func Login(c *gin.Context) {
 			log.Fatalf("generate token error: %v", err)
 		}
 		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: Response{StatusCode: 0},
+			Response: structs.Response{StatusCode: 0},
 			UserId:   user.ID,
 			Token:    token,
 		})
@@ -99,18 +100,19 @@ func UserInfo(c *gin.Context) {
 	err := db.GetUser(&user, uid)
 	if err == nil {
 		c.JSON(http.StatusOK, UserResponse{
-			Response: Response{StatusCode: 0},
-			User: User{
+			Response: structs.Response{StatusCode: 0},
+			User: structs.User{
 				Id:            user.ID,
 				Name:          user.Identifier,
 				FollowCount:   0,
 				FollowerCount: 0,
 				IsFollow:      false,
+				Avatar:        "http://momentcon-1255653016.file.myqcloud.com/2110464774/20001/84192D32EF6436116E845A18A22FB074.png",
 			},
 		})
 	} else {
 		c.JSON(http.StatusOK, UserResponse{
-			Response: Response{StatusCode: 1, StatusMsg: "用户不存在"},
+			Response: structs.Response{StatusCode: 1, StatusMsg: "用户不存在"},
 		})
 	}
 }

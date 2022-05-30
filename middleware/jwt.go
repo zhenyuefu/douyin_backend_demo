@@ -3,6 +3,7 @@ package middleware
 import (
 	"errors"
 	"github.com/RaymondCode/simple-demo/constants"
+	"github.com/RaymondCode/simple-demo/structs"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"net/http"
@@ -54,9 +55,12 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		token := c.Query("token")
 		if token == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code": 2003,
-				"msg":  "缺少token",
+			token = c.PostForm("token")
+		}
+		if token == "" {
+			c.JSON(http.StatusOK, structs.Response{
+				StatusCode: 2003,
+				StatusMsg:  "缺少token",
 			})
 			c.Abort()
 			return
@@ -64,9 +68,9 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 
 		claims, err := ParseToken(token)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code": 2005,
-				"msg":  "无效的Token",
+			c.JSON(http.StatusOK, structs.Response{
+				StatusCode: 2005,
+				StatusMsg:  "登录已过期",
 			})
 			c.Abort()
 			return

@@ -18,7 +18,7 @@ func initRouter(r *gin.Engine) {
 	apiRouter.POST("/user/register/", controller.Register)
 	apiRouter.POST("/user/login/", controller.Login)
 	publishRouter := apiRouter.Group("/publish")
-	//publishRouter.Use(middleware.JWTAuthMiddleware())
+	publishRouter.Use(middleware.JWTAuthMiddleware())
 	publishRouter.POST("/action/", controller.Publish)
 	publishRouter.GET("/list/", controller.PublishList)
 
