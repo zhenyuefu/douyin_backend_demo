@@ -33,6 +33,11 @@ func FollowList(c *gin.Context) {
 
 // FollowerList all users have same follower list
 func FollowerList(c *gin.Context) {
+	//连接数据库
+	db, _ := gorm.Open(mysql.Open(constants.MySQLDefaultDSN))
+	var users []User
+	err = db.Select("id", "name").Find(&users, 1).Error
+
 	c.JSON(http.StatusOK, UserListResponse{
 		Response: Response{
 			StatusCode: 0,
