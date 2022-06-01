@@ -4,8 +4,8 @@ import (
 	"github.com/RaymondCode/simple-demo/constants"
 	"github.com/RaymondCode/simple-demo/structs"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -39,13 +39,18 @@ func FollowList(c *gin.Context) {
 func FollowerList(c *gin.Context) {
 	//连接数据库
 	db, err := gorm.Open(mysql.Open(constants.MySQLDefaultDSN))
-	var users []User
-	err = db.Select("id", "name").Find(&users, 1).Error
+	if err != nil {
+		panic(err)
+	}
+
+	var users = User{}
+	err = db.Select("Id", "Name", "FollowCount", "FollowerCount", "IsFollow",
+		"Avatar").Find(&users, 1).Error
 
 	c.JSON(http.StatusOK, UserListResponse{
 		Response: structs.Response{
 			StatusCode: 0,
 		},
-		UserList: []structs.User{DemoUser},
+		UserList: []structs.User{structs.User(users)},
 	})
 }
