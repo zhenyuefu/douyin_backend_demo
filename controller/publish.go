@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/RaymondCode/simple-demo/constants"
 	"github.com/RaymondCode/simple-demo/db"
 	"github.com/RaymondCode/simple-demo/middleware"
 	"github.com/RaymondCode/simple-demo/structs"
@@ -111,8 +112,8 @@ func PublishList(c *gin.Context) {
 		like := db.DB.Model(&v).Where("uid = ?", uid).Association("Likes").Count()
 		videoList = append(videoList, structs.Video{
 			Id:            v.ID,
-			PlayUrl:       "http://10.0.2.2:8080/static/" + v.PlayUrl,
-			CoverUrl:      "http://10.0.2.2:8080/static/" + v.CoverUrl,
+			PlayUrl:       constants.VideoURLPrefix + v.PlayUrl,
+			CoverUrl:      constants.VideoURLPrefix + v.CoverUrl,
 			FavoriteCount: db.DB.Model(&v).Association("Likes").Count(),
 			CommentCount:  db.DB.Model(&v).Association("Comments").Count(),
 			IsFavorite:    like > 0,

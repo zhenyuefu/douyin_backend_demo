@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/RaymondCode/simple-demo/db"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"log"
 	"net/http"
 	"os"
@@ -13,6 +14,8 @@ import (
 )
 
 func main() {
+	viper.SetConfigFile(".env")
+	viper.AutomaticEnv()
 	r := gin.Default()
 
 	initRouter(r)
