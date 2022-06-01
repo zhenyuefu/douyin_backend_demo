@@ -1,11 +1,9 @@
 package controller
 
 import (
-	"github.com/RaymondCode/simple-demo/constants"
+	"github.com/RaymondCode/simple-demo/db"
 	"github.com/RaymondCode/simple-demo/structs"
 	"github.com/gin-gonic/gin"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -37,20 +35,18 @@ func FollowList(c *gin.Context) {
 
 // FollowerList all users have same follower list
 func FollowerList(c *gin.Context) {
-	//连接数据库
-	db, err := gorm.Open(mysql.Open(constants.MySQLDefaultDSN))
-	if err != nil {
-		panic(err)
-	}
 
-	var users = User{}
-	err = db.Select("Id", "Name", "FollowCount", "FollowerCount", "IsFollow",
+	var users = db.UserModel{}
+	err := db.DB.Select("Id", "Name", "FollowCount", "FollowerCount", "IsFollow",
 		"Avatar").Find(&users, 1).Error
-
+	if err != nil {
+		c.JSON(http.StatusOK, structs.Response{StatusCode: 1, StatusMsg: "Get user list failed"})
+		return
+	}
 	c.JSON(http.StatusOK, UserListResponse{
 		Response: structs.Response{
 			StatusCode: 0,
 		},
-		UserList: []structs.User{structs.User(users)},
+		UserList: []structs.User{DemoUser},
 	})
 }
