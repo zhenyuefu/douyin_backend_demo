@@ -8,7 +8,8 @@ import (
 
 type VideoModel struct {
 	gorm.Model
-	AuthorID uint `gorm:"index"`
+	AuthorID uint      `gorm:"index"`
+	Author   UserModel `gorm:"foreignKey:AuthorID"`
 	PlayUrl  string
 	CoverUrl string
 	Likes    []LikeModel    `gorm:"foreignKey:VID"`
@@ -35,6 +36,6 @@ func GetVideoList(uid uint) ([]VideoModel, error) {
 // GetVideosBefore 获取视频
 func GetVideosBefore(time time.Time) ([]VideoModel, error) {
 	var videos []VideoModel
-	result := DB.Where("updated_at < ?", time.Format("2006-01-02 15:04:05")).Limit(30).Order("updated_at desc").Find(&videos)
+	result := DB.Joins("Author").Where("video.updated_at < ?", time.Format("2006-01-02 15:04:05")).Limit(30).Order("updated_at desc").Find(&videos)
 	return videos, result.Error
 }

@@ -67,9 +67,9 @@ func Publish(c *gin.Context) {
 		imageUrl = ""
 	}
 	video := db.VideoModel{
-		AuthorID: user.ID,
-		PlayUrl:  finalName,
-		CoverUrl: imageName,
+		Author:   user,
+		PlayUrl:  constants.VideoURLPrefix + finalName,
+		CoverUrl: constants.VideoURLPrefix + imageName,
 		Title:    c.PostForm("title"),
 	}
 	if err := db.CreateVideo(&video); err != nil {
@@ -112,8 +112,8 @@ func PublishList(c *gin.Context) {
 		like := db.DB.Model(&v).Where("uid = ?", uid).Association("Likes").Count()
 		videoList = append(videoList, structs.Video{
 			Id:            v.ID,
-			PlayUrl:       constants.VideoURLPrefix + v.PlayUrl,
-			CoverUrl:      constants.VideoURLPrefix + v.CoverUrl,
+			PlayUrl:       v.PlayUrl,
+			CoverUrl:      v.CoverUrl,
 			FavoriteCount: db.DB.Model(&v).Association("Likes").Count(),
 			CommentCount:  db.DB.Model(&v).Association("Comments").Count(),
 			IsFavorite:    like > 0,

@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	"github.com/RaymondCode/simple-demo/constants"
 	"github.com/RaymondCode/simple-demo/db"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
@@ -14,8 +15,11 @@ import (
 )
 
 func main() {
-	viper.SetConfigFile(".env")
-	viper.AutomaticEnv()
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Error loading .env file")
+	}
+	constants.Init()
 	r := gin.Default()
 
 	initRouter(r)

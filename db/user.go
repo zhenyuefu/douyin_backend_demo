@@ -11,11 +11,11 @@ type UserModel struct {
 	gorm.Model
 	Identifier string `gorm:"uniqueIndex;size:32"`
 	Credential []byte
-	Name       string        `json:"name"`
-	Follows    []FollowModel `gorm:"foreignKey:UID"`
-	Followers  []FollowModel `gorm:"foreignKey:FID"`
-	Videos     []VideoModel  `gorm:"foreignKey:AuthorID"`
-	Likes      []LikeModel   `gorm:"foreignKey:UID"`
+	Name       string       `json:"name"`
+	Follows    []UserModel  `gorm:"many2many:follows;joinForeignKey:uid;joinReferences:fid"`
+	Followers  []UserModel  `gorm:"many2many:follows;joinForeignKey:fid;joinReferences:uid"`
+	Videos     []VideoModel `gorm:"foreignKey:AuthorID"`
+	Likes      []LikeModel  `gorm:"foreignKey:UID"`
 }
 
 func (u *UserModel) TableName() string {
@@ -45,4 +45,15 @@ func VerifyCredential(identifier string, credential string) (*UserModel, error) 
 	}
 
 	return &user, nil
+}
+
+// GetFollowList 获取关注列表
+func GetFollowList(uid uint) ([]UserModel, error) {
+	var user UserModel
+	var follows []UserModel
+	err := DB.First(&user, uid).Association("Follows").Find(&follows)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return follows, err
+	}
+	return follows, nil
 }
