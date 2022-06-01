@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	MySQLDefaultDSN  = "root:password@tcp(host.docker.internal:3306)/douyin?charset=utf8mb4&parseTime=True&loc=Local"
+	MySQLDefaultDSN  = "root:password@tcp(host.containers.internal:3306)/douyin?charset=utf8mb4&parseTime=True&loc=Local"
 	UserTableName    = "user"
 	FollowTableName  = "follow"
 	VideoTableName   = "video"
