@@ -4,7 +4,7 @@ import (
 	"github.com/RaymondCode/simple-demo/db"
 	"github.com/RaymondCode/simple-demo/structs"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"log"
 	"net/http"
 )
 
@@ -37,26 +37,49 @@ func FollowList(c *gin.Context) {
 // FollowerList all users have same follower list
 func FollowerList(c *gin.Context) {
 	//连接数据库
-	var DB *gorm.DB
-	var err error
-	db.Init()
+	//var DB *gorm.DB
+	//var err error
+	//db.Init()
+	//
+	//m := DB.Migrator()
+	//if err = m.AutoMigrate(&User{}); err != nil {
+	//	panic(err)
+	//}
+	//
+	//var users = User{}
+	//err = DB.Select("Id", "Name", "FollowCount", "FollowerCount", "IsFollow",
+	//	"Avatar").Find(&users, 1).Error
+	//if err != nil {
+	//	c.JSON(http.StatusOK, structs.Response{StatusCode: 1, StatusMsg: "Get user list failed"})
+	//	return
+	//}
 
-	m := DB.Migrator()
-	if err = m.AutoMigrate(&User{}); err != nil {
-		panic(err)
-	}
-
-	var users = User{}
-	err = DB.Select("Id", "Name", "FollowCount", "FollowerCount", "IsFollow",
-		"Avatar").Find(&users, 1).Error
+	users, err := db.GetFollowList(1)
 	if err != nil {
 		c.JSON(http.StatusOK, structs.Response{StatusCode: 1, StatusMsg: "Get user list failed"})
 		return
 	}
+	var userList []structs.User
+	for _, user := range users {
+		var u []db.UserModel
+		// 1 是自己uid
+		err := db.DB.Model(&user).Association("Followers").Find(&u, 1)
+		if err != nil {
+			log.Println("查询follow:" + err.Error())
+		}
+		userList = append(userList, structs.User{
+			Id:            user.ID,
+			Name:          user.Identifier,
+			FollowCount:   db.DB.Model(&user).Association("Followings").Count(),
+			FollowerCount: db.DB.Model(&user).Association("Followers").Count(),
+			IsFollow:      len(u) > 0,
+		})
+	}
+	log.Println(userList)
 	c.JSON(http.StatusOK, UserListResponse{
 		Response: structs.Response{
 			StatusCode: 0,
 		},
-		UserList: []structs.User{structs.User(users)},
+		UserList: userList,
 	})
 }

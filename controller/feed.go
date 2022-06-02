@@ -52,15 +52,22 @@ func Feed(c *gin.Context) {
 			like = db.DB.Model(&v).Where("uid = ?", uid).Association("Likes").Count()
 		}
 		videoList = append(videoList, structs.Video{
-			Id:            v.ID,
-			PlayUrl:       "http://10.0.2.2:8080/static/" + v.PlayUrl,
-			CoverUrl:      "http://10.0.2.2:8080/static/" + v.CoverUrl,
+			Id:       v.ID,
+			PlayUrl:  v.PlayUrl,
+			CoverUrl: v.CoverUrl,
+			Author: structs.User{
+				Id:            v.Author.ID,
+				Name:          v.Author.Identifier,
+				FollowCount:   db.DB.Model(&v.Author).Association("Followers").Count(),
+				FollowerCount: db.DB.Model(&v.Author).Association("Followings").Count(),
+			},
 			FavoriteCount: db.DB.Model(&v).Association("Likes").Count(),
 			CommentCount:  db.DB.Model(&v).Association("Comments").Count(),
 			IsFavorite:    like > 0,
 			Title:         v.Title,
 		})
 	}
+	log.Println(videoList)
 	if len(videos) > 0 {
 		nextTime = videos[len(videos)-1].CreatedAt.Unix()
 	}
