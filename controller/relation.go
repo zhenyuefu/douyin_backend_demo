@@ -91,7 +91,7 @@ func FollowerList(c *gin.Context) {
 		userList = append(userList, structs.User{
 			Id:            user.ID,
 			Name:          user.Identifier,
-			FollowCount:   db.DB.Model(&user).Association("Followings").Count(),
+			FollowCount:   db.DB.Model(&user).Association("Follows").Count(),
 			FollowerCount: db.DB.Model(&user).Association("Followers").Count(),
 			IsFollow:      len(u) > 0,
 		})
