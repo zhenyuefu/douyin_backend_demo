@@ -26,11 +26,33 @@ func RelationAction(c *gin.Context) {
 
 // FollowList all users have same follow list
 func FollowList(c *gin.Context) {
+	users, err := db.GetFollowList(1)
+	if err != nil {
+		c.JSON(http.StatusOK, structs.Response{StatusCode: 1, StatusMsg: "Get user list failed"})
+		return
+	}
+	var userList []structs.User
+	for _, user := range users {
+		var u []db.UserModel
+		// 1 是自己uid
+		//err := db.DB.Model(&user).Association("Follows").Find(&u, 1)
+		//if err != nil {
+		//	log.Println("查询follow:" + err.Error())
+		//}
+		userList = append(userList, structs.User{
+			Id:            user.ID,
+			Name:          user.Identifier,
+			FollowCount:   db.DB.Model(&user).Association("Follows").Count(),
+			FollowerCount: db.DB.Model(&user).Association("Followers").Count(),
+			IsFollow:      len(u) > 0,
+		})
+	}
+	log.Println(userList)
 	c.JSON(http.StatusOK, UserListResponse{
 		Response: structs.Response{
 			StatusCode: 0,
 		},
-		UserList: []structs.User{DemoUser},
+		UserList: userList,
 	})
 }
 
@@ -47,8 +69,7 @@ func FollowerList(c *gin.Context) {
 	//}
 	//
 	//var users = User{}
-	//err = DB.Select("Id", "Name", "FollowCount", "FollowerCount", "IsFollow",
-	//	"Avatar").Find(&users, 1).Error
+	//err = DB.Select("Id", "Name", "FollowCount", "FollowerCount", "IsFollow","Avatar").Find(&users, 1).Error
 	//if err != nil {
 	//	c.JSON(http.StatusOK, structs.Response{StatusCode: 1, StatusMsg: "Get user list failed"})
 	//	return
