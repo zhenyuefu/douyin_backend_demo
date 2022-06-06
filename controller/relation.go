@@ -35,10 +35,10 @@ func FollowList(c *gin.Context) {
 	for _, user := range users {
 		var u []db.UserModel
 		// 1 是自己uid
-		//err := db.DB.Model(&user).Association("Follows").Find(&u, 1)
-		//if err != nil {
-		//	log.Println("查询follow:" + err.Error())
-		//}
+		err := db.DB.Model(&user).Association("Follows").Find(&u, 1)
+		if err != nil {
+			log.Println("查询follow:" + err.Error())
+		}
 		userList = append(userList, structs.User{
 			Id:            user.ID,
 			Name:          user.Identifier,
@@ -86,7 +86,7 @@ func FollowerList(c *gin.Context) {
 		// 1 是自己uid
 		err := db.DB.Model(&user).Association("Followers").Find(&u, 1)
 		if err != nil {
-			log.Println("查询follow:" + err.Error())
+			log.Println("查询follower:" + err.Error())
 		}
 		userList = append(userList, structs.User{
 			Id:            user.ID,
