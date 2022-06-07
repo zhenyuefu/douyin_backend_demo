@@ -15,3 +15,15 @@ type LikeModel struct {
 func (l *LikeModel) TableName() string {
 	return constants.LikeTableName
 }
+
+// CreateFavorite
+func CreateLike(like *LikeModel) error {
+	return DB.Create(like).Error
+}
+
+// GetFavoriteList
+func GetLikeList(uid uint) ([]LikeModel, error) {
+	var likes []LikeModel
+	result := DB.Where("user_id = ?", uid).Find(&likes)
+	return likes, result.Error
+}
