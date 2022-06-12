@@ -70,7 +70,7 @@ func VideoSelect(videoModels *[]VideoModel, uid uint) *gorm.DB {
 	var followerCountQuery = DB.Table("follows").Select("fid,count(fid) as follower_count").Group("fid")
 	var totalFavoriteQuery = DB.Table("like").Select("author_id,count(*) as count").Joins("LEFT JOIN video v on v.id = `like`.vid").Group("author_id")
 	var userLikeCountQuery = DB.Table("like").Select("uid,count(*) as favorite_count").Group("uid")
-	var commentCountQuery = DB.Table("comment").Select("v_id,count(*) as comment_count").Group("v_id")
+	var commentCountQuery = DB.Table("comment").Select("v_id,count(*) as comment_count").Where("deleted_at IS NULL").Group("v_id")
 	var workCountQuery = DB.Table("video").Select("author_id,count(*) as work_count").Group("author_id")
 	return DB.Model(&videoModels).
 		Select("likeCount.favorite_count,"+
