@@ -5,7 +5,7 @@ import (
 	"github.com/RaymondCode/simple-demo/constants"
 	"github.com/RaymondCode/simple-demo/structs"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 	"net/http"
 	"time"
 )
@@ -13,18 +13,18 @@ import (
 type Claims struct {
 	ID         uint
 	Identifier string
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 func GenerateToken(uid uint, identifier string) (string, error) {
 	nowTime := time.Now()
-	expireTime := nowTime.Add(time.Hour * 24)
+	expireTime := jwt.NewNumericDate(nowTime.Add(time.Hour * 24 * 7))
 	issuer := "douyin"
 	claims := Claims{
 		ID:         uid,
 		Identifier: identifier,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expireTime.Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: expireTime,
 			Issuer:    issuer,
 		},
 	}
@@ -70,7 +70,7 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 		if err != nil {
 			c.JSON(http.StatusOK, structs.Response{
 				StatusCode: 2005,
-				StatusMsg:  "登录已过期",
+				StatusMsg:  "请重新登录",
 			})
 			c.Abort()
 			return

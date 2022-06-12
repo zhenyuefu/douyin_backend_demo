@@ -10,17 +10,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
+	"strconv"
 )
-
-var usersLoginInfo = map[string]structs.User{
-	"zhangleidouyin": {
-		Id:            1,
-		Name:          "zhanglei",
-		FollowCount:   10,
-		FollowerCount: 5,
-		IsFollow:      true,
-	},
-}
 
 type UserLoginResponse struct {
 	structs.Response
@@ -39,9 +30,10 @@ func Register(c *gin.Context) {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
 	user := db.UserModel{
-		Name:       "testName",
+		Name:       username,
 		Identifier: username,
 		Credential: hashedPassword,
+		Avatar:     "https://static.wikia.nocookie.net/youtube/images/8/8a/Skittle-Chan.jpg/revision/latest?cb=20211122171729",
 	}
 
 	err := db.CreateUser(&user)
@@ -59,7 +51,7 @@ func Register(c *gin.Context) {
 	} else {
 		token, err := middleware.GenerateToken(user.ID, user.Identifier)
 		if err != nil {
-			log.Fatalf("generate token error: %v", err)
+			log.Printf("generate token error: %v\n", err)
 		}
 		c.JSON(http.StatusOK, UserLoginResponse{
 			Response: structs.Response{StatusCode: 0},
@@ -80,7 +72,7 @@ func Login(c *gin.Context) {
 	} else {
 		token, err := middleware.GenerateToken(user.ID, user.Identifier)
 		if err != nil {
-			log.Fatalf("generate token error: %v", err)
+			log.Printf("generate token error: %v\n", err)
 		}
 		c.JSON(http.StatusOK, UserLoginResponse{
 			Response: structs.Response{StatusCode: 0},
@@ -92,23 +84,30 @@ func Login(c *gin.Context) {
 
 func UserInfo(c *gin.Context) {
 	claim, exist := c.Get("user")
+	// uid是自己的id
 	var uid uint
-	var user db.UserModel
 	if exist {
 		uid = claim.(*middleware.Claims).ID
 	}
-	err := db.GetUser(&user, uid)
+	userIdStr := c.Query("user_id")
+	if userIdStr == "" {
+		c.JSON(http.StatusOK, UserResponse{
+			Response: structs.Response{StatusCode: 1, StatusMsg: "user_id不能为空"},
+		})
+	}
+	userID, err := strconv.ParseUint(userIdStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, UserResponse{
+			Response: structs.Response{StatusCode: 1, StatusMsg: "user_id不合法"},
+		})
+	}
+	var user structs.User
+	err = db.GetUser(&user, uint(userID), uid)
+	log.Printf("user: %v\n", user)
 	if err == nil {
 		c.JSON(http.StatusOK, UserResponse{
 			Response: structs.Response{StatusCode: 0},
-			User: structs.User{
-				Id:            user.ID,
-				Name:          user.Identifier,
-				FollowCount:   0,
-				FollowerCount: 0,
-				IsFollow:      false,
-				Avatar:        "http://momentcon-1255653016.file.myqcloud.com/2110464774/20001/84192D32EF6436116E845A18A22FB074.png",
-			},
+			User:     user,
 		})
 	} else {
 		c.JSON(http.StatusOK, UserResponse{

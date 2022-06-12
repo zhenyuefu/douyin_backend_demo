@@ -7,8 +7,6 @@ const (
 	UserTableName    = "user"
 	VideoTableName   = "video"
 	CommentTableName = "comment"
-	LikeTableName    = "like"
-	FollowTableName  = "follow"
 )
 
 var JwtSignKey = []byte("douyin")

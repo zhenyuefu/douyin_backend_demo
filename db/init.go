@@ -23,7 +23,7 @@ func Init() {
 
 	m := DB.Migrator()
 
-	if err = m.AutoMigrate(&UserModel{}, &VideoModel{}, &LikeModel{}, &CommentModel{}); err != nil {
+	if err = m.AutoMigrate(&UserModel{}, &VideoModel{}, &CommentModel{}); err != nil {
 		panic(err)
 	}
 

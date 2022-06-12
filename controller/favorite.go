@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"github.com/RaymondCode/simple-demo/middleware"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -20,53 +22,65 @@ type FavoriteListResponse struct {
 
 // FavoriteAction no practical effect, just check if token is valid
 func FavoriteAction(c *gin.Context) {
-	//Check token
-	token := c.Query("token")
-	_, exist := usersLoginInfo[token]
+	//获取uid
+	user, exist := c.Get("user")
 	if !exist {
 		c.JSON(http.StatusOK, structs.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
 		return
 	}
-
-	//Get uid,vid,action_type
-	action_type := c.Query("action_type")
-	cancel := false
-	if action_type == "2" {
-		cancel = true
-	}
-	user_id, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
-	uid := uint(user_id)
-	video_id, _ := strconv.ParseInt(c.Query("video_id"), 10, 64)
-	vid := uint(video_id)
-
-	like := db.LikeModel{
-		UID:    uid,
-		VID:    vid,
-		Cancel: cancel,
-	}
-
-	//Create likeModel
-	if err := db.CreateLike(&like); err != nil {
-		c.JSON(http.StatusOK, structs.Response{
-			StatusCode: 1,
-			StatusMsg:  err.Error(),
-		})
+	uid := user.(*middleware.Claims).ID
+	//获取vid
+	vid, err := strconv.ParseInt(c.Query("video_id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, structs.Response{StatusCode: 1, StatusMsg: "Video id is not valid"})
 		return
 	}
 
-	c.JSON(http.StatusOK, structs.Response{StatusCode: 0})
-	return
+	actionType := c.Query("action_type")
+	switch actionType {
+	case "1":
+		{
+
+			like := db.LikeModel{
+				UID: uid,
+				VID: uint(vid),
+			}
+
+			//Create likeModel
+			if err := db.Like(&like); err != nil {
+				c.JSON(http.StatusOK, structs.Response{
+					StatusCode: 1,
+					StatusMsg:  err.Error(),
+				})
+				return
+			}
+
+			c.JSON(http.StatusOK, structs.Response{StatusCode: 0})
+			return
+		}
+	case "2":
+		err := db.UnLike(uid, uint(vid))
+		if err != nil {
+			c.JSON(http.StatusOK, structs.Response{
+				StatusCode: 1,
+				StatusMsg:  err.Error(),
+			})
+			return
+		}
+	}
+
 }
 
 // FavoriteList all users have same favorite video list
 func FavoriteList(c *gin.Context) {
 
 	//Get user_id
-	user_id, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
-	uid := uint(user_id)
+	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
+	uid := uint(userId)
 
-	//Get LikeList by user_id
-	likeList, err := db.GetLikeList(uid)
+	var videos []structs.Video
+	err := db.GetLikeVideos(&videos, uid)
+	log.Printf("%+v", videos)
 	if err != nil {
 		c.JSON(http.StatusOK, structs.Response{
 			StatusCode: 1,
@@ -74,27 +88,10 @@ func FavoriteList(c *gin.Context) {
 		})
 		return
 	}
-
-	//Get videoList from LikeList
-	var videoList []structs.Video
-	for _, like := range likeList {
-		var v db.VideoModel
-		db.DB.Where("uid = ?", like.VID).First(&v)
-		likes := db.DB.Model(&v).Where("uid = ?", uid).Association("Likes").Count()
-		videoList = append(videoList, structs.Video{
-			Id:            v.ID,
-			PlayUrl:       v.PlayUrl,
-			CoverUrl:      v.CoverUrl,
-			FavoriteCount: db.DB.Model(&v).Association("Likes").Count(),
-			CommentCount:  db.DB.Model(&v).Association("Comments").Count(),
-			IsFavorite:    likes > 0,
-			Title:         v.Title,
-		})
-	}
-	c.JSON(http.StatusOK, VideoListResponse{
+	c.JSON(http.StatusOK, FavoriteListResponse{
 		Response: structs.Response{
 			StatusCode: 0,
 		},
-		VideoList: videoList,
+		VideoList: videos,
 	})
 }
