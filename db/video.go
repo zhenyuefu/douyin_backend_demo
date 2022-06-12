@@ -71,12 +71,14 @@ func VideoSelect(videoModels *[]VideoModel, uid uint) *gorm.DB {
 	var totalFavoriteQuery = DB.Table("like").Select("author_id,count(*) as count").Joins("LEFT JOIN video v on v.id = `like`.vid").Group("author_id")
 	var userLikeCountQuery = DB.Table("like").Select("uid,count(*) as favorite_count").Group("uid")
 	var commentCountQuery = DB.Table("comment").Select("v_id,count(*) as comment_count").Group("v_id")
+	var workCountQuery = DB.Table("video").Select("author_id,count(*) as work_count").Group("author_id")
 	return DB.Model(&videoModels).
 		Select("likeCount.favorite_count,"+
 			"userLikeCount.favorite_count as Author__favorite_count,"+
 			"followerCount.follower_count as Author__follower_count,"+
 			"followCount.follow_count as Author__follow_count,"+
 			"totalFavorite.count as Author__total_favorite,"+
+			"workCount.work_count as Author__work_count,"+
 			"commentCount.comment_count as comment_count,"+
 			"EXISTS(SELECT 1 from `follows` WHERE fid=video.author_id and uid=? limit 1) as Author__is_follow,"+
 			"EXISTS(SELECT 1 from `like` WHERE vid = video.id and uid = ? limit 1) as is_favorite,"+
@@ -95,5 +97,6 @@ func VideoSelect(videoModels *[]VideoModel, uid uint) *gorm.DB {
 		Joins("left join (?) as followerCount on video.author_id = followerCount.fid ", followerCountQuery).
 		Joins("left join (?) as userLikeCount on video.author_id = userLikeCount.uid ", userLikeCountQuery).
 		Joins("left join (?) as totalFavorite on video.author_id = totalFavorite.author_id ", totalFavoriteQuery).
+		Joins("left join (?) as workCount on video.author_id = workCount.author_id ", workCountQuery).
 		Joins("left join (?) as commentCount on video.id = commentCount.v_id ", commentCountQuery)
 }
