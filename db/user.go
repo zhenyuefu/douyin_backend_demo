@@ -38,6 +38,7 @@ func GetUser(user *structs.User, uid uint, loginUID uint) error {
 	user.IsFollow = userModel.IsFollow(loginUID)
 	user.TotalFavorite = userModel.TotalFavorite()
 	user.FavoriteCount = userModel.FavoriteCount()
+	user.WorkCount = userModel.WorkCount()
 	return result.Error
 }
 
@@ -126,4 +127,8 @@ func (u *UserModel) IsFollow(fid uint) bool {
 	var followModel FollowModel
 	result := DB.Debug().Model(&followModel).Where("uid = ? and fid = ?", u.ID, fid).Limit(1).Find(&followModel)
 	return result.Error == nil
+}
+
+func (u *UserModel) WorkCount() int64 {
+	return DB.Debug().Model(&u).Association("Videos").Count()
 }

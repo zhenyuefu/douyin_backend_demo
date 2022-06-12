@@ -32,4 +32,5 @@ type User struct {
 	Avatar        string `json:"avatar,omitempty"`
 	TotalFavorite int64  `json:"total_favorited,omitempty"`
 	FavoriteCount int64  `json:"favorite_count,omitempty"`
+	WorkCount     int64  `json:"work_count,omitempty"`
 }
