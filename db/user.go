@@ -12,12 +12,13 @@ type UserModel struct {
 	gorm.Model
 	Identifier string `gorm:"uniqueIndex;size:32"`
 	Credential []byte
-	Name       string       `json:"name"`
-	Avatar     string       `json:"avatar"`
-	Follows    []UserModel  `gorm:"many2many:follows;joinForeignKey:uid;joinReferences:fid"`
-	Followers  []UserModel  `gorm:"many2many:follows;joinForeignKey:fid;joinReferences:uid"`
-	Videos     []VideoModel `gorm:"foreignKey:AuthorID"`
-	Likes      []VideoModel `gorm:"many2many:like;joinForeignKey:uid;joinReferences:vid"`
+	Name       string         `json:"name"`
+	Avatar     string         `json:"avatar"`
+	Follows    []UserModel    `gorm:"many2many:follows;joinForeignKey:uid;joinReferences:fid"`
+	Followers  []UserModel    `gorm:"many2many:follows;joinForeignKey:fid;joinReferences:uid"`
+	Videos     []VideoModel   `gorm:"foreignKey:AuthorID"`
+	Likes      []VideoModel   `gorm:"many2many:like;joinForeignKey:uid;joinReferences:vid"`
+	Comments   []CommentModel `gorm:"foreignKey:UID"`
 }
 
 func (u *UserModel) TableName() string {
