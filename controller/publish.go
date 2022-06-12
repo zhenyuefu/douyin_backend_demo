@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strconv"
 )
 
 type VideoListResponse struct {
@@ -31,7 +32,7 @@ func Publish(c *gin.Context) {
 		})
 		return
 	}
-	err := db.GetUser(&user, uid)
+	err := db.GetUserModel(&user, uid)
 	if err != nil {
 		c.JSON(http.StatusOK, structs.Response{
 			StatusCode: 1,
@@ -88,18 +89,7 @@ func Publish(c *gin.Context) {
 
 // PublishList all users have same publish video list
 func PublishList(c *gin.Context) {
-	var uid uint
-	if claim, exist := c.Get("user"); exist {
-		uid = claim.(*middleware.Claims).ID
-	} else {
-		c.JSON(http.StatusOK, structs.Response{
-			StatusCode: 1,
-			StatusMsg:  "User doesn't exist",
-		})
-		return
-	}
-
-	videos, err := db.GetVideoList(uid)
+	uid, err := strconv.Atoi(c.Query("user_id"))
 	if err != nil {
 		c.JSON(http.StatusOK, structs.Response{
 			StatusCode: 1,
@@ -107,23 +97,18 @@ func PublishList(c *gin.Context) {
 		})
 		return
 	}
-	var videoList []structs.Video
-	for _, v := range videos {
-		like := db.DB.Model(&v).Where("uid = ?", uid).Association("Likes").Count()
-		videoList = append(videoList, structs.Video{
-			Id:            v.ID,
-			PlayUrl:       v.PlayUrl,
-			CoverUrl:      v.CoverUrl,
-			FavoriteCount: db.DB.Model(&v).Association("Likes").Count(),
-			CommentCount:  db.DB.Model(&v).Association("Comments").Count(),
-			IsFavorite:    like > 0,
-			Title:         v.Title,
+	videos, err := db.GetVideoList(uint(uid))
+	if err != nil {
+		c.JSON(http.StatusOK, structs.Response{
+			StatusCode: 1,
+			StatusMsg:  err.Error(),
 		})
+		return
 	}
 	c.JSON(http.StatusOK, VideoListResponse{
 		Response: structs.Response{
 			StatusCode: 0,
 		},
-		VideoList: videoList,
+		VideoList: videos,
 	})
 }

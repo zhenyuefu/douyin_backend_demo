@@ -6,8 +6,8 @@ type Response struct {
 }
 
 type Video struct {
-	Id            uint   `json:"id,omitempty"`
-	Author        User   `json:"author"`
+	ID            uint   `json:"id,omitempty"`
+	Author        User   `json:"author" gorm:"foreignKey:ID"`
 	PlayUrl       string `json:"play_url" json:"play_url,omitempty"`
 	CoverUrl      string `json:"cover_url,omitempty"`
 	FavoriteCount int64  `json:"favorite_count,omitempty"`
@@ -17,17 +17,19 @@ type Video struct {
 }
 
 type Comment struct {
-	Id         int64  `json:"id,omitempty"`
+	ID         uint   `json:"id,omitempty"`
 	User       User   `json:"user"`
 	Content    string `json:"content,omitempty"`
 	CreateDate string `json:"create_date,omitempty"`
 }
 
 type User struct {
-	Id            uint   `json:"id,omitempty"`
+	ID            uint   `json:"id,omitempty"`
 	Name          string `json:"name,omitempty"`
 	FollowCount   int64  `json:"follow_count,omitempty"`
 	FollowerCount int64  `json:"follower_count,omitempty"`
 	IsFollow      bool   `json:"is_follow,omitempty"`
 	Avatar        string `json:"avatar,omitempty"`
+	TotalFavorite int64  `json:"total_favorited,omitempty"`
+	FavoriteCount int64  `json:"favorite_count,omitempty"`
 }

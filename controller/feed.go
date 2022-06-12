@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/RaymondCode/simple-demo/db"
 	"github.com/RaymondCode/simple-demo/middleware"
 	"github.com/RaymondCode/simple-demo/structs"
@@ -39,42 +38,17 @@ func Feed(c *gin.Context) {
 		}
 		nextTime, _ = strconv.ParseInt(timeStamp, 10, 64)
 	}
-	videos, err := db.GetVideosBefore(time.Unix(nextTime, 0))
+	var videos []structs.Video
+	var err error
+	err, nextTime = db.GetVideosBefore(&videos, time.Unix(nextTime, 0), uid)
 	if err != nil {
 		c.JSON(http.StatusOK, structs.Response{StatusCode: 1, StatusMsg: err.Error()})
 		return
 	}
 
-	var videoList []structs.Video
-	for _, v := range videos {
-		var like int64
-		if token != "" {
-			like = db.DB.Model(&v).Where("uid = ?", uid).Association("Likes").Count()
-		}
-		videoList = append(videoList, structs.Video{
-			Id:       v.ID,
-			PlayUrl:  v.PlayUrl,
-			CoverUrl: v.CoverUrl,
-			Author: structs.User{
-				Id:            v.Author.ID,
-				Name:          v.Author.Identifier,
-				FollowCount:   db.DB.Model(&v.Author).Association("Followers").Count(),
-				FollowerCount: db.DB.Model(&v.Author).Association("Followings").Count(),
-			},
-			FavoriteCount: db.DB.Model(&v).Association("Likes").Count(),
-			CommentCount:  db.DB.Model(&v).Association("Comments").Count(),
-			IsFavorite:    like > 0,
-			Title:         v.Title,
-		})
-	}
-	log.Println(videoList)
-	if len(videos) > 0 {
-		nextTime = videos[len(videos)-1].CreatedAt.Unix()
-	}
-	fmt.Print(videoList)
 	c.JSON(http.StatusOK, FeedResponse{
 		Response:  structs.Response{StatusCode: 0},
-		VideoList: videoList,
+		VideoList: videos,
 		NextTime:  nextTime,
 	})
 }

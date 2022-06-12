@@ -15,3 +15,19 @@ type CommentModel struct {
 func (c *CommentModel) TableName() string {
 	return constants.CommentTableName
 }
+
+// CreateComment 创建评论
+func CreateComment(comment *CommentModel) error {
+	return DB.Create(comment).Error
+}
+
+// DeleteComment 删除评论
+func DeleteComment(id uint) error {
+	return DB.Delete(&CommentModel{}, id).Error
+}
+
+// GetComment 获取评论
+func GetComment(commentList *[]CommentModel, vid uint) error {
+	res := DB.Model(&CommentModel{}).Where("v_id = ?", vid).Find(&commentList)
+	return res.Error
+}
