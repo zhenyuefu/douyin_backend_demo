@@ -40,7 +40,13 @@ func Feed(c *gin.Context) {
 	}
 	var videos []structs.Video
 	var err error
-	err, nextTime = db.GetVideosBefore(&videos, time.Unix(nextTime, 0), uid)
+	log.Printf("uid: %d, nextTimeBefore: %d", uid, nextTime)
+	err = db.GetVideosBefore(&videos, time.Unix(nextTime, 0), uid)
+	if len(videos) > 0 {
+		nextTime = videos[len(videos)-1].UpdatedAt.Unix()
+	}
+	//log.Printf("%+v", videos)
+	log.Printf("uid: %d, nextTimeAfter: %d", uid, nextTime)
 	if err != nil {
 		c.JSON(http.StatusOK, structs.Response{StatusCode: 1, StatusMsg: err.Error()})
 		return

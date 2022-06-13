@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/RaymondCode/simple-demo/middleware"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -80,7 +79,7 @@ func FavoriteList(c *gin.Context) {
 
 	var videos []structs.Video
 	err := db.GetLikeVideos(&videos, uid)
-	log.Printf("%+v", videos)
+	//log.Printf("%+v", videos)
 	if err != nil {
 		c.JSON(http.StatusOK, structs.Response{
 			StatusCode: 1,

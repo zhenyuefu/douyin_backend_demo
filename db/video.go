@@ -4,7 +4,6 @@ import (
 	"github.com/RaymondCode/simple-demo/constants"
 	"github.com/RaymondCode/simple-demo/structs"
 	"gorm.io/gorm"
-	"log"
 	"time"
 )
 
@@ -34,24 +33,19 @@ func GetVideoList(uid uint) ([]structs.Video, error) {
 	var VideoModels []VideoModel
 	result := VideoSelect(&VideoModels, uid).
 		Where(&VideoModel{AuthorID: uid}).Scan(&videos)
-	log.Printf("%+v", videos)
+	//log.Printf("%+v", videos)
 	return videos, result.Error
 }
 
 // GetVideosBefore 获取视频
-func GetVideosBefore(videos *[]structs.Video, time time.Time, uid uint) (error, int64) {
+func GetVideosBefore(videos *[]structs.Video, time time.Time, uid uint) error {
 	var videoModels []VideoModel
-	var nextTime int64
 	result := VideoSelect(&videoModels, uid).
 		Where("video.updated_at < ?", time.Format("2006-01-02 15:04:05")).
 		Limit(30).
 		Order("video.updated_at desc").
 		Scan(&videos)
-	log.Printf("%+v", videos)
-	if len(videoModels) > 0 {
-		nextTime = videoModels[len(videoModels)-1].CreatedAt.Unix()
-	}
-	return result.Error, nextTime
+	return result.Error
 }
 
 // GetLikeVideos 获取点赞的视频
@@ -83,6 +77,7 @@ func VideoSelect(videoModels *[]VideoModel, uid uint) *gorm.DB {
 			"EXISTS(SELECT 1 from `follows` WHERE fid=video.author_id and uid=? limit 1) as Author__is_follow,"+
 			"EXISTS(SELECT 1 from `like` WHERE vid = video.id and uid = ? limit 1) as is_favorite,"+
 			"`video`.`id`,"+
+			"`video`.`updated_at`,"+
 			"`video`.`deleted_at`,"+
 			"`video`.`author_id`,"+
 			"`video`.`play_url`,"+
