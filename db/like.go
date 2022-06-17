@@ -1,8 +1,8 @@
 package db
 
 type LikeModel struct {
-	UID uint `gorm:"primaryKey;column:uid"`
-	VID uint `gorm:"primaryKey;column:vid"`
+	UID uint `gorm:"primaryKey;column:uid;index"`
+	VID uint `gorm:"primaryKey;column:vid;index"`
 }
 
 func (l *LikeModel) TableName() string {

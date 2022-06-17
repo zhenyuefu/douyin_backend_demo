@@ -56,6 +56,7 @@ func RelationAction(c *gin.Context) {
 			})
 			return
 		}
+		c.JSON(http.StatusOK, structs.Response{StatusCode: 0})
 	}
 }
 
