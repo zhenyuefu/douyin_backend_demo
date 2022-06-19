@@ -79,7 +79,7 @@ func CommentAction(c *gin.Context) {
 				c.JSON(http.StatusOK, structs.Response{StatusCode: 1, StatusMsg: "Comment id is not valid"})
 				return
 			}
-			err = db.DeleteComment(uint(commentId))
+			err = db.DeleteComment(uint(commentId), uid)
 			if err != nil {
 				c.JSON(http.StatusOK, structs.Response{StatusCode: 1, StatusMsg: "Delete comment failed"})
 				return

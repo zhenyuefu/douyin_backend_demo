@@ -22,8 +22,8 @@ func CreateComment(comment *CommentModel) error {
 }
 
 // DeleteComment 删除评论
-func DeleteComment(id uint) error {
-	return DB.Delete(&CommentModel{}, id).Error
+func DeleteComment(id uint, uid uint) error {
+	return DB.Where("uid=?", uid).Delete(&CommentModel{}, id).Error
 }
 
 // GetComment 获取评论
